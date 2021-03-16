@@ -2,6 +2,14 @@
 ========
 
 
+TODO:
+
+  * Use ajax results rendering to visualize progress
+  * Make all paths and options configurable from alter.ini
+  * Implement IP calculator?
+  * Write installation and configuration documentation
+ 
+
 
   * [Live demo](http://ip.nightfly.biz)
   
