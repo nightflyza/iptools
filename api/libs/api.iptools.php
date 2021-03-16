@@ -3,6 +3,13 @@
 class IPTools {
 
     /**
+     * System alter.ini config
+     *
+     * @var array
+     */
+    protected $altCfg = array();
+
+    /**
      * ICMP ping path
      *
      * @var string
@@ -83,6 +90,13 @@ class IPTools {
      * Some routes, urls etc
      */
     const PROUTE_IP = 'lookatthisip';
+    const OPT_PING_PATH = 'PING_PATH';
+    const OPT_PING_OPTS = 'PING_OPTIONS';
+    const OPT_NSLOOK_PATH = 'NSLOOKUP_PATH';
+    const OPT_TRACEROUTE_PATH = 'TRACEROUTE_PATH';
+    const OPT_MTR_PATH = 'MTR_PATH';
+    const OPT_MTR_OPTS = 'MTR_OPTIONS';
+    const OPT_WHOIS_PATH = 'WHOIS_PATH';
 
     /**
      * Creates new instance

@@ -649,6 +649,8 @@ class YALFCore {
                                         if (empty($this->config[$each['NEED_OPTION']])) {
                                             $renderMenuEntry = false; //required option disabled
                                         }
+                                    } else {
+                                        $renderMenuEntry = false;
                                     }
                                 }
                             }
