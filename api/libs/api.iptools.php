@@ -45,6 +45,13 @@ class IPTools {
     protected $mtrOpts = '--report --report-cycles 5';
 
     /**
+     * Default whois path
+     *
+     * @var string
+     */
+    protected $whoisPath = '/usr/bin/whois';
+
+    /**
      * Remote client IP addr
      *
      * @var string
@@ -260,6 +267,25 @@ class IPTools {
         if ($targetIp) {
             if ($this->checkTimeout()) {
                 $command = $this->mtrPath . ' ' . $this->mtrOpts . ' ' . $targetIp;
+                $result .= wf_tag('pre') . shell_exec($command) . wf_tag('pre', true);
+            } else {
+                $result .= $this->messages->getStyledMessage(__('Only one request per') . ' ' . $this->timeout . ' ' . __('seconds is allowed'), 'error');
+            }
+        }
+        return($result);
+    }
+
+    /**
+     * Runs whois and returns its results
+     * 
+     * @return string
+     */
+    public function runWhois() {
+        $result = '';
+        $targetIp = $this->catchIp();
+        if ($targetIp) {
+            if ($this->checkTimeout()) {
+                $command = $this->whoisPath . ' ' . $targetIp;
                 $result .= wf_tag('pre') . shell_exec($command) . wf_tag('pre', true);
             } else {
                 $result .= $this->messages->getStyledMessage(__('Only one request per') . ' ' . $this->timeout . ' ' . __('seconds is allowed'), 'error');
