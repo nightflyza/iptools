@@ -169,14 +169,12 @@ class IPTools {
      * 
      * @return bool/string
      */
-    protected function isIpValid($ip) {
+    public function isIpValid($ip) {
         $result = false;
         $ip = ubRouting::filters($ip, 'nb');
         $ip = trim($ip);
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            if ($ip != '0.0.0.0') {
-                $result = $ip;
-            }
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            $result = $ip;
         }
         return($result);
     }
@@ -251,7 +249,7 @@ class IPTools {
         $targetIp = $this->catchIp();
         if ($targetIp) {
             if ($this->checkTimeout()) {
-                log_register('PING '.$targetIp);
+                log_register('PING ' . $targetIp);
                 $command = $this->pingPath . ' ' . $this->pingOpts . ' ' . $targetIp;
                 $result .= wf_tag('pre') . shell_exec($command) . wf_tag('pre', true);
             } else {
@@ -271,7 +269,7 @@ class IPTools {
         $targetIp = $this->catchIp();
         if ($targetIp) {
             if ($this->checkTimeout()) {
-                log_register('NSLOOKUP '.$targetIp);
+                log_register('NSLOOKUP ' . $targetIp);
                 $command = $this->nslookupPath . ' ' . $targetIp;
                 $result .= wf_tag('pre') . shell_exec($command) . wf_tag('pre', true);
             } else {
@@ -291,7 +289,7 @@ class IPTools {
         $targetIp = $this->catchIp();
         if ($targetIp) {
             if ($this->checkTimeout()) {
-                log_register('TRACEROUTE '.$targetIp);
+                log_register('TRACEROUTE ' . $targetIp);
                 $command = $this->traceroutePath . ' ' . $targetIp;
                 $result .= wf_tag('pre') . shell_exec($command) . wf_tag('pre', true);
             } else {
@@ -311,7 +309,7 @@ class IPTools {
         $targetIp = $this->catchIp();
         if ($targetIp) {
             if ($this->checkTimeout()) {
-                log_register('MTR '.$targetIp);
+                log_register('MTR ' . $targetIp);
                 $command = $this->mtrPath . ' ' . $this->mtrOpts . ' ' . $targetIp;
                 $result .= wf_tag('pre') . shell_exec($command) . wf_tag('pre', true);
             } else {
@@ -331,7 +329,7 @@ class IPTools {
         $targetIp = $this->catchIp();
         if ($targetIp) {
             if ($this->checkTimeout()) {
-                log_register('WHOIS '.$targetIp);
+                log_register('WHOIS ' . $targetIp);
                 $command = $this->whoisPath . ' ' . $targetIp;
                 $result .= wf_tag('pre') . shell_exec($command) . wf_tag('pre', true);
             } else {
