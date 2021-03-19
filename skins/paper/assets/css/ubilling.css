@@ -652,3 +652,9 @@ sub, sup {
     color: #DEE3E7;
     font-size: larger;
 }
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  text-align: justify;
+}

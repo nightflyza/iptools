@@ -4,9 +4,7 @@
 
 TODO:
 
-  * implement hosts and IP inputs
-  * Use ajax results rendering to visualize progress
-  * Implement IP calculator?
+  * implement hosts(?) and IP inputs
   * Write installation and configuration documentation
  
 # Misc links
