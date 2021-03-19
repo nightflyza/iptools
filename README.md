@@ -4,8 +4,8 @@
 
 TODO:
 
+  * implement hosts and IP inputs
   * Use ajax results rendering to visualize progress
-  * Make all paths and options configurable from alter.ini
   * Implement IP calculator?
   * Write installation and configuration documentation
  

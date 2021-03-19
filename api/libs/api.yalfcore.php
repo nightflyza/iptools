@@ -996,4 +996,19 @@ class YALFCore {
         return true;
     }
 
+    /**
+     * Returns some yalfConf option value or false if its not exists
+     * 
+     * @param string $optionName
+     * 
+     * @return mixed/bool on error
+     */
+    public function getConfigOption($optionName) {
+        $result = false;
+        if (isset($this->config[$optionName])) {
+            $result = $this->config[$optionName];
+        }
+        return($result);
+    }
+
 }

@@ -3,11 +3,11 @@
 class IPTools {
 
     /**
-     * System alter.ini config
+     * System yalf.ini config as key=>value
      *
      * @var array
      */
-    protected $altCfg = array();
+    protected $yalfCfg = array();
 
     /**
      * ICMP ping path
@@ -97,14 +97,42 @@ class IPTools {
     const OPT_MTR_PATH = 'MTR_PATH';
     const OPT_MTR_OPTS = 'MTR_OPTIONS';
     const OPT_WHOIS_PATH = 'WHOIS_PATH';
+    const OPT_TIMEOUT = 'REQUESTS_TIMEOUT';
 
     /**
      * Creates new instance
      */
     public function __construct() {
+        $this->loadConfig();
+        $this->setOptions();
         $this->initCache();
         $this->initMessages();
         $this->setRemoteIp();
+    }
+
+    /**
+     * Preloads system config into protected property
+     * 
+     * @return void
+     */
+    protected function loadConfig() {
+        $this->yalfCfg = parse_ini_file(YALFCore::YALF_CONF_PATH);
+    }
+
+    /**
+     * Sets config-based options to current instance
+     * 
+     * @return void
+     */
+    protected function setOptions() {
+        $this->timeout = $this->yalfCfg[self::OPT_TIMEOUT];
+        $this->pingPath = $this->yalfCfg[self::OPT_PING_PATH];
+        $this->pingOpts = $this->yalfCfg[self::OPT_PING_OPTS];
+        $this->nslookupPath = $this->yalfCfg[self::OPT_NSLOOK_PATH];
+        $this->traceroutePath = $this->yalfCfg[self::OPT_TRACEROUTE_PATH];
+        $this->mtrPath = $this->yalfCfg[self::OPT_MTR_PATH];
+        $this->mtrOpts = $this->yalfCfg[self::OPT_MTR_OPTS];
+        $this->whoisPath = $this->yalfCfg[self::OPT_WHOIS_PATH];
     }
 
     /**
