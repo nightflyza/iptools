@@ -173,8 +173,14 @@ class IPTools {
         $result = false;
         $ip = ubRouting::filters($ip, 'nb');
         $ip = trim($ip);
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            $result = $ip;
+        if ($this->yalfCfg['ALLOW_PRIVATE_NETS']) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_RES_RANGE)) {
+                $result = $ip;
+            }
+        } else {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                $result = $ip;
+            }
         }
         return($result);
     }
