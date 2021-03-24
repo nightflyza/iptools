@@ -3,7 +3,7 @@
 if (cfr('NSLOOKUP')) {
     if ($system->getConfigOption('NSLOOKUP_ENABLED')) {
         $ipTools = new IPTools();
-        show_window(__('DNS lookup'), $ipTools->renderIpForm('nslookup'));
+        show_window(__('DNS lookup'), $ipTools->renderIpForm('nslookup this'));
         if ($ipTools->catchIp()) {
             show_window(__('DNS lookup results'), $ipTools->runDnsLookup());
         }

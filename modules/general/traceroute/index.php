@@ -3,7 +3,7 @@
 if (cfr('TRACEROUTE')) {
     if ($system->getConfigOption('TRACEROUTE_ENABLED')) {
         $ipTools = new IPTools();
-        show_window(__('traceroute'), $ipTools->renderIpForm('traceroute'));
+        show_window(__('traceroute'), $ipTools->renderIpForm('traceroute!'));
 
 
         if ($ipTools->catchIp()) {
