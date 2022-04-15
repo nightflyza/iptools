@@ -309,11 +309,18 @@ function sm_MapDrawSwitches() {
 /**
  * Returns full map marks for builds with filled GEO field
  * 
+ * @param int $buildIdFilter return only one build placemark
+ * 
  * @return string
  */
-function um_MapDrawBuilds() {
+function um_MapDrawBuilds($buildIdFilter = '') {
+    $buildIdFilter = ubRouting::filters($buildIdFilter, 'int');
     $ym_conf = rcms_parse_ini_file(CONFIG_PATH . "ymaps.ini");
     $query = "SELECT * from `build` WHERE `geo` != '' ";
+    //optional filter here
+    if ($buildIdFilter) {
+        $query .= " AND `id`='" . $buildIdFilter . "'";
+    }
     $allbuilds = simple_queryall($query);
     $allstreets = zb_AddressGetStreetAllData();
     $streetData = array();
@@ -372,7 +379,7 @@ function um_MapDrawBuilds() {
             $cells = wf_TableCell(__('apt.'));
             $cells .= wf_TableCell(__('User'));
             $cells .= wf_TableCell(__('Status'));
-            $rows = wf_tag('tr', false, '', 'bgcolor=#DCDCDC') . $cells . wf_tag('tr', true);
+            $rows = wf_tag('tr', false, 'row1', 'bgcolor=#DCDCDC') . $cells . wf_tag('tr', true);
             $iconlabel = '';
             $footer = '';
 
@@ -403,15 +410,17 @@ function um_MapDrawBuilds() {
                                 if (isset($aliveIps[$userIp])) {
                                     $aliveFlag = web_bool_led(true);
                                     $aliveUsers++;
+                                    $aliveKey = 'live';
                                 } else {
                                     $aliveFlag = web_bool_led(false);
+                                    $aliveKey = 'dead';
                                 }
 
 
                                 $cells = wf_TableCell($eachapt['apt']);
                                 $cells .= wf_TableCell(wf_Link('?module=userprofile&username=' . $eachapt['login'], $userIp, false));
-                                $cells .= wf_TableCell($aliveFlag);
-                                $rows .= wf_TableRow($cells);
+                                $cells .= wf_TableCell($aliveFlag, '', '', 'sorttable_customkey="' . $aliveKey . '"');
+                                $rows .= wf_TableRow($cells, 'row5');
                             }
                         }
                     }
@@ -696,8 +705,13 @@ function sm_MapInitBasic($center, $zoom, $type, $placemarks = '', $editor = '', 
 function sm_ShowMapContainer() {
     $container = wf_tag('div', false, '', 'id="ubmap" style="width: 1000; height:800px;"');
     $container .= wf_tag('div', true);
-    $controls = wf_Link("?module=usersmap", wf_img('skins/ymaps/build.png') . ' ' . __('Builds map'), false, 'ubButton');
-    $controls .= wf_Link("?module=switchmap", wf_img('skins/ymaps/network.png') . ' ' . __('Switches map'), false, 'ubButton');
+    $controls = '';
+    if (cfr('USERSMAP')) {
+        $controls .= wf_Link("?module=usersmap", wf_img('skins/ymaps/build.png') . ' ' . __('Builds map'), false, 'ubButton');
+    }
+    if (cfr('SWITCHMAP')) {
+        $controls .= wf_Link("?module=switchmap", wf_img('skins/ymaps/network.png') . ' ' . __('Switches map'), false, 'ubButton');
+    }
     if (cfr('SWITCHESEDIT')) {
         $controls .= wf_Link("?module=switchmap&locfinder=true", wf_img('skins/ymaps/edit.png') . ' ' . __('Edit map'), false, 'ubButton');
     }
@@ -719,10 +733,16 @@ function sm_ShowMapContainer() {
 function um_ShowMapContainer() {
     $container = wf_tag('div', false, '', 'id="ubmap" style="width: 1000; height:800px;"');
     $container .= wf_tag('div', true);
-
-    $controls = wf_Link("?module=switchmap", wf_img('skins/ymaps/network.png') . ' ' . __('Switches map'), false, 'ubButton');
-    $controls .= wf_Link("?module=usersmap", wf_img('skins/ymaps/build.png') . ' ' . __('Builds map'), false, 'ubButton');
-    $controls .= wf_Link("?module=usersmap&locfinder=true", wf_img('skins/ymaps/edit.png') . ' ' . __('Edit map'), false, 'ubButton');
+    $controls = '';
+    if (cfr('SWITCHMAP')) {
+        $controls .= wf_Link("?module=switchmap", wf_img('skins/ymaps/network.png') . ' ' . __('Switches map'), false, 'ubButton');
+    }
+    if (cfr('USERSMAP')) {
+        $controls .= wf_Link("?module=usersmap", wf_img('skins/ymaps/build.png') . ' ' . __('Builds map'), false, 'ubButton');
+    }
+    if (cfr('BUILDS')) {
+        $controls .= wf_Link("?module=usersmap&locfinder=true", wf_img('skins/ymaps/edit.png') . ' ' . __('Edit map'), false, 'ubButton');
+    }
     $controls .= wf_delimiter(1);
 
     show_window(__('Builds and users map'), $controls . $container);

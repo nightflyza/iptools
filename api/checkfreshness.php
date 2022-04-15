@@ -7,6 +7,7 @@ require_once ('libs/api.ubrouting.php');
 if (ubRouting::optionCliCheck('run', false)) {
 
     $diffDumpFlag = ubRouting::optionCliCheck('dumpdiff', false);
+    $errorCount=0;
 
     $ubillingLibsPath = __DIR__ . '/../../ubilling/api/libs/';
     $yalfLibsPath = __DIR__ . '/libs/';
@@ -25,6 +26,7 @@ if (ubRouting::optionCliCheck('run', false)) {
                     if (!isset($ignoreList[$eachYalfLib])) {
                         $diffResult = shell_exec('diff --ignore-all-space ' . $yalfLibsPath . $eachYalfLib . ' ' . $ubillingLibsPath . $eachYalfLib);
                         if (!empty($diffResult)) {
+                        	$errorCount++;
                             print('FAILED: ' . $eachYalfLib . PHP_EOL);
                             if ($diffDumpFlag) {
                                 print('=========================' . PHP_EOL);
@@ -35,9 +37,15 @@ if (ubRouting::optionCliCheck('run', false)) {
                             print('OK: ' . $eachYalfLib . PHP_EOL);
                         }
                     }
-                } else {
-                    //print('SKIP: ' . $eachYalfLib . PHP_EOL);
                 }
+            }
+
+            //summary here
+            print('=========================' . PHP_EOL);
+            if ($errorCount>0) {
+            	print('Found '.$errorCount.' issues with libs freshness'.PHP_EOL);
+            } else {
+            	print('Everything is Ok'.PHP_EOL);
             }
         } else {
             print('Error: no Ubilling libs at specified path not found: ' . $ubillingLibsPath . PHP_EOL);

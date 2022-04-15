@@ -37,6 +37,11 @@ class UbillingTelegram {
     const QUEUE_PATH = 'content/telegram/';
 
     /**
+     * Maximum message length
+     */
+    const MESSAGE_LIMIT = 4095;
+
+    /**
      * Creates new Telegram object instance
      * 
      * @param string $token
@@ -128,18 +133,29 @@ class UbillingTelegram {
         $result = false;
         $chatid = trim($chatid);
         $module = (!empty($module)) ? ' MODULE ' . $module : '';
+        $prefix = 'tlg_';
         if (!empty($chatid)) {
             $message = str_replace(array("\n\r", "\n", "\r"), ' ', $message);
             if ($translit) {
                 $message = zb_TranslitString($message);
             }
+
             $message = trim($message);
-            $queueId = 'tlg_' . zb_rand_string(8);
-            $filename = self::QUEUE_PATH . $queueId;
+            $queueId = time();
+            $offset = 0;
+            $filename = self::QUEUE_PATH . $prefix . $queueId . '_' . $offset;
+            if (file_exists($filename)) {
+                while (file_exists($filename)) {
+                    $offset++; //incremeting number of messages per second
+                    $filename = self::QUEUE_PATH . $prefix . $queueId . '_' . $offset;
+                }
+            }
+
+
             $storedata = 'CHATID="' . $chatid . '"' . "\n";
             $storedata .= 'MESSAGE="' . $message . '"' . "\n";
             file_put_contents($filename, $storedata);
-            log_register('UTLG SEND MESSAGE FOR `' . $chatid . '` AS `' . $queueId . '` ' . $module);
+            log_register('UTLG SEND MESSAGE FOR `' . $chatid . '` AS `' . $prefix . $queueId . '_' . $offset . '` ' . $module);
             $result = true;
         }
         return ($result);
@@ -339,7 +355,6 @@ class UbillingTelegram {
     public function getBotContacts() {
         $result = array();
         $updatesRaw = $this->getUpdatesRaw();
-
         if (!empty($updatesRaw)) {
             if (isset($updatesRaw['result'])) {
                 if (!empty($updatesRaw['result'])) {
@@ -353,6 +368,8 @@ class UbillingTelegram {
                                         $result[$groupData['id']]['chatid'] = $groupData['id'];
                                         $groupName = (!empty($groupData['username'])) ? $groupData['username'] : @$groupData['title']; //only title for private groups
                                         $result[$groupData['id']]['name'] = $groupName;
+                                        $result[$groupData['id']]['first_name'] = @$groupData['title'];
+                                        $result[$groupData['id']]['last_name'] = '';
                                         $result[$groupData['id']]['type'] = 'supergroup';
                                         $result[$groupData['id']]['lastmessage'] = strip_tags(@$each['message']['text']);
                                     }
@@ -366,6 +383,8 @@ class UbillingTelegram {
                                     $messageData = $each['message']['from'];
                                     $result[$messageData['id']]['chatid'] = $messageData['id'];
                                     $result[$messageData['id']]['name'] = @$messageData['username']; //may be empty
+                                    $result[$messageData['id']]['first_name'] = @$messageData['first_name'];
+                                    $result[$messageData['id']]['last_name'] = @$messageData['last_name'];
                                     $result[$messageData['id']]['type'] = 'user';
                                     $result[$messageData['id']]['lastmessage'] = strip_tags(@$each['message']['text']);
                                 }
@@ -379,6 +398,8 @@ class UbillingTelegram {
                                     $chatData = $each['channel_post']['chat'];
                                     $result[$chatData['id']]['chatid'] = $chatData['id'];
                                     $result[$chatData['id']]['name'] = $chatData['username'];
+                                    $result[$chatData['id']]['first_name'] = '';
+                                    $result[$chatData['id']]['last_name'] = '';
                                     $result[$chatData['id']]['type'] = 'channel';
                                     $result[$messageData['id']]['lastmessage'] = strip_tags(@$each['message']['text']);
                                 }
@@ -416,6 +437,61 @@ class UbillingTelegram {
 
                 $result['markup'] = $keyboardMarkup;
             }
+
+            if ($inline) {
+                $result['type'] = 'inline';
+                $keyboardMarkup = $buttonsArray;
+
+                $result['markup'] = $keyboardMarkup;
+            }
+        }
+        return($result);
+    }
+
+    /**
+     * Split message into chunks of safe size
+     * 
+     * @param string $message
+     * 
+     * @return array
+     */
+    protected function splitMessage($message) {
+        $result = preg_split('~~u', $message, -1, PREG_SPLIT_NO_EMPTY);
+        $chunks = array_chunk($result, self::MESSAGE_LIMIT);
+        foreach ($chunks as $i => $chunk) {
+            $chunks[$i] = join('', (array) $chunk);
+        }
+        $result = $chunks;
+
+        return ($result);
+    }
+
+    /**
+     * Sends message to some chat id using Telegram API
+     * 
+     * @param int $chatid remote chatId
+     * @param string $message text message to send
+     * @param array $keyboard keyboard encoded with makeKeyboard method
+     * @param bool $nosplit dont automatically split message into 4096 slices
+     * 
+     * @return string/bool
+     */
+    public function directPushMessage($chatid, $message, $keyboard = array(), $noSplit = false) {
+        $result = '';
+        if ($noSplit) {
+            $result = $this->apiSendMessage($chatid, $message, $keyboard);
+        } else {
+            $messageSize = mb_strlen($message, 'UTF-8');
+            if ($messageSize > self::MESSAGE_LIMIT) {
+                $messageSplit = $this->splitMessage($message);
+                if (!empty($messageSplit)) {
+                    foreach ($messageSplit as $io => $eachMessagePart) {
+                        $result = $this->apiSendMessage($chatid, $eachMessagePart, $keyboard);
+                    }
+                }
+            } else {
+                $result = $this->apiSendMessage($chatid, $message, $keyboard);
+            }
         }
         return($result);
     }
@@ -428,9 +504,10 @@ class UbillingTelegram {
      * @param array $keyboard keyboard encoded with makeKeyboard method
      * @throws Exception
      * 
-     * @return void
+     * @return string/bool
      */
-    public function directPushMessage($chatid, $message, $keyboard = array()) {
+    protected function apiSendMessage($chatid, $message, $keyboard = array()) {
+        $result = '';
         $data['chat_id'] = $chatid;
         $data['text'] = $message;
 
@@ -513,7 +590,11 @@ class UbillingTelegram {
                     $data['reply_markup'] = $encodedKeyboard;
                 }
 
-                //TODO: inline keyboards
+                if ($keyboard['type'] == 'inline') {
+                    $encodedKeyboard = json_encode(array('inline_keyboard' => $keyboard['markup']));
+                    $data['reply_markup'] = $encodedKeyboard;
+                    $data['parse_mode'] = 'HTML';
+                }
 
                 $method = 'sendMessage';
             }
@@ -549,7 +630,8 @@ class UbillingTelegram {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
             if ($this->debug) {
-                deb(curl_exec($ch));
+                $result = curl_exec($ch);
+                deb($result);
                 $curlError = curl_error($ch);
                 if (!empty($curlError)) {
                     show_error(__('Error') . ' ' . __('Telegram') . ': ' . $curlError);
@@ -557,12 +639,13 @@ class UbillingTelegram {
                     show_success(__('Telegram API sending via') . ' ' . $this->apiUrl . ' ' . __('success'));
                 }
             } else {
-                curl_exec($ch);
+                $result = curl_exec($ch);
             }
             curl_close($ch);
         } else {
             throw new Exception('EX_TOKEN_EMPTY');
         }
+        return($result);
     }
 
     /**
